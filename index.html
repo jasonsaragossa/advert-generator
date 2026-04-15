@@ -4,7 +4,6 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Job Advert Generator</title>
-<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
@@ -39,42 +38,25 @@
   .pill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
   .pill { position: relative; }
   .pill input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
-  .pill label {
-    display: block; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px;
-    font-size: 13px; color: #666; cursor: pointer; text-align: center;
-    transition: all 0.12s; background: #fafafa; font-weight: 400;
-  }
+  .pill label { display: block; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; color: #666; cursor: pointer; text-align: center; transition: all 0.12s; background: #fafafa; font-weight: 400; }
   .pill input[type=radio]:checked + label { border-color: #1a1a18; background: #1a1a18; color: #fff; font-weight: 500; }
 
-  .btn-primary {
-    width: 100%; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer;
-    background: #1a1a18; color: #fff; border: none; border-radius: 10px;
-    transition: opacity 0.15s; margin-top: 0.5rem; font-family: inherit;
-  }
+  .btn-primary { width: 100%; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; background: #1a1a18; color: #fff; border: none; border-radius: 10px; transition: opacity 0.15s; margin-top: 0.5rem; font-family: inherit; }
   .btn-primary:hover { opacity: 0.85; }
   .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .btn-secondary {
-    padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
-    background: #fafafa; color: #444; border: 1px solid #ddd; border-radius: 8px;
-    font-family: inherit; transition: background 0.12s;
-  }
+  .btn-secondary { padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer; background: #fafafa; color: #444; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; transition: background 0.12s; }
   .btn-secondary:hover { background: #f0f0ee; }
 
-  .btn-danger {
-    padding: 9px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
-    background: none; color: #c0392b; border: 1px solid #f5c6c0; border-radius: 8px;
-    font-family: inherit; transition: background 0.12s;
-  }
+  .btn-danger { padding: 9px 14px; font-size: 13px; font-weight: 500; cursor: pointer; background: none; color: #c0392b; border: 1px solid #f5c6c0; border-radius: 8px; font-family: inherit; transition: background 0.12s; }
   .btn-danger:hover { background: #fdf0ee; }
 
-  .output-card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 1.5rem; margin-top: 1rem; display: none; }
-  .output-actions { display: flex; gap: 8px; margin-top: 1.25rem; flex-wrap: wrap; }
-  .advert-text { font-size: 15px; line-height: 1.75; color: #1a1a18; white-space: pre-wrap; }
+  .output-card { background: #fff; border-radius: 12px; border: 2px solid #1a1a18; padding: 1.5rem; margin-top: 1.25rem; display: none; }
+  .advert-text { font-size: 15px; line-height: 1.85; color: #1a1a18; white-space: pre-wrap; background: #f9f9f7; border-radius: 8px; padding: 1.25rem; border: 1px solid #e8e8e4; }
+  .output-actions { display: flex; gap: 8px; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #f0f0ee; flex-wrap: wrap; }
 
   .error { color: #c0392b; font-size: 13px; margin-top: 0.75rem; padding: 10px 12px; background: #fdf0ee; border-radius: 8px; border: 1px solid #f5c6c0; display: none; }
   .success-msg { color: #1e7e44; font-size: 13px; margin-top: 0.75rem; padding: 10px 12px; background: #edfaf3; border-radius: 8px; border: 1px solid #b6e8ca; display: none; }
-  .info-msg { color: #1a5fa8; font-size: 13px; padding: 10px 12px; background: #e8f0fb; border-radius: 8px; border: 1px solid #b6d0f5; margin-bottom: 1rem; }
 
   .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -99,7 +81,6 @@
   .key-dot.set { background: #1e7e44; }
   .key-dot.unset { background: #c0392b; }
 
-  /* API key gate overlay */
   .gate { display: none; position: fixed; inset: 0; background: #f5f5f3; z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
   .gate.visible { display: flex; }
   .gate-card { background: #fff; border-radius: 16px; border: 1px solid #e8e8e4; padding: 2rem; max-width: 480px; width: 100%; }
@@ -113,7 +94,6 @@
 </head>
 <body>
 
-<!-- API KEY GATE — shown if no key saved -->
 <div class="gate" id="gate">
   <div class="gate-card">
     <div class="gate-logo">Advert Generator</div>
@@ -122,7 +102,7 @@
     <div class="gate-field">
       <label>API key</label>
       <input type="password" id="gateKey" placeholder="sk-ant-..." />
-      <p class="gate-hint">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys. Each person on the team needs to enter this once on their own device.</p>
+      <p class="gate-hint">Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> then API Keys. Each person on the team enters this once on their own device.</p>
     </div>
     <button class="btn-primary" onclick="saveGateKey()">Save and continue</button>
     <div class="error" id="gateError"></div>
@@ -135,13 +115,12 @@
   <button class="nav-tab" id="tab-settings" onclick="showPage('settings', this)">Settings</button>
 </nav>
 
-<!-- GENERATE PAGE -->
 <div class="page active" id="page-generate">
   <div class="page-header">
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
-    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.1</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.2</p>
   </div>
 
   <div class="card">
@@ -179,7 +158,7 @@
     <div class="section-label">Selling points</div>
     <div class="field">
       <label>Give 3 reasons why someone would leave their job for this one</label>
-      <textarea id="reasons" placeholder="e.g. Fully remote, greenfield project, direct impact on P&amp;L"></textarea>
+      <textarea id="reasons" placeholder="e.g. Fully remote, greenfield project, direct impact on P&L"></textarea>
       <div class="hint">Short phrases are fine.</div>
     </div>
     <div class="field">
@@ -220,7 +199,6 @@
   </div>
 </div>
 
-<!-- LIBRARY PAGE -->
 <div class="page" id="page-library">
   <div class="page-header">
     <div class="logo">Advert Generator</div>
@@ -230,25 +208,23 @@
   <div id="libraryList"></div>
 </div>
 
-<!-- SETTINGS PAGE -->
 <div class="page" id="page-settings">
   <div class="page-header">
     <div class="logo">Advert Generator</div>
     <h1>Settings</h1>
-    <p class="subtitle">Manage your API key and preferences.</p>
+    <p class="subtitle">Manage your API key.</p>
   </div>
-
   <div class="card">
     <div class="section-label">Anthropic API key</div>
     <div id="keyStatusBadge"></div>
     <div class="field">
       <label>Update API key</label>
       <input type="password" id="settingsKey" placeholder="sk-ant-..." />
-      <div class="hint">Your key is saved only on this device in your browser. It is never sent anywhere except directly to Anthropic when generating an advert.</div>
+      <div class="hint">Your key is saved only on this device. It is sent directly to Anthropic when generating an advert and nowhere else.</div>
     </div>
     <button class="btn-secondary" onclick="saveSettingsKey()">Save key</button>
     <div class="success-msg" id="settingsSaveMsg"></div>
-    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #f0f0ee;">
+    <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #f0f0ee;">
       <button class="btn-danger" onclick="clearKey()">Remove API key from this device</button>
     </div>
   </div>
@@ -293,19 +269,13 @@ No up-to-date CV required.`;
 function getKey() { return localStorage.getItem('anthropicApiKey') || ''; }
 
 function checkGate() {
-  if (!getKey()) {
-    document.getElementById('gate').classList.add('visible');
-  }
+  if (!getKey()) document.getElementById('gate').classList.add('visible');
 }
 
 function saveGateKey() {
   const val = document.getElementById('gateKey').value.trim();
   const err = document.getElementById('gateError');
-  if (!val.startsWith('sk-ant-') && !val.startsWith('sk-')) {
-    err.textContent = 'That doesn\'t look like a valid API key. It should start with sk-ant-';
-    err.style.display = 'block';
-    return;
-  }
+  if (!val) { err.textContent = 'Please enter your API key.'; err.style.display = 'block'; return; }
   localStorage.setItem('anthropicApiKey', val);
   document.getElementById('gate').classList.remove('visible');
   updateKeyStatus();
@@ -324,7 +294,7 @@ function saveSettingsKey() {
 }
 
 function clearKey() {
-  if (!confirm('Remove your API key from this device? You\'ll need to enter it again to generate adverts.')) return;
+  if (!confirm('Remove your API key from this device? You will need to enter it again to generate adverts.')) return;
   localStorage.removeItem('anthropicApiKey');
   updateKeyStatus();
   document.getElementById('gate').classList.add('visible');
@@ -334,16 +304,16 @@ function updateKeyStatus() {
   const badge = document.getElementById('keyStatusBadge');
   const key = getKey();
   if (key) {
-    const masked = key.slice(0, 10) + '••••••••••••••••••••' + key.slice(-4);
-    badge.innerHTML = `<div class="key-status set"><div class="key-dot set"></div>API key saved on this device (${masked})</div>`;
+    const masked = key.slice(0, 10) + '••••••••••••' + key.slice(-4);
+    badge.innerHTML = '<div class="key-status set"><div class="key-dot set"></div>API key saved on this device (' + masked + ')</div>';
   } else {
-    badge.innerHTML = `<div class="key-status unset"><div class="key-dot unset"></div>No API key saved — add one below</div>`;
+    badge.innerHTML = '<div class="key-status unset"><div class="key-dot unset"></div>No API key saved — add one below</div>';
   }
 }
 
 function showPage(name, tab) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('page-' + name).classList.add('active');
   tab.classList.add('active');
   if (name === 'library') renderLibrary();
@@ -376,17 +346,7 @@ async function generateAdvert() {
   const level = levelEl ? levelEl.value : 'Not specified';
   const location = locationEl ? locationEl.value : 'Not specified';
 
-  const userPrompt = `Write a job advert with these details:
-
-Client type: ${clientType}
-Job title: ${jobTitle}
-Experience level: ${level}
-Working arrangement: ${location}
-3 reasons to leave their current job for this one: ${reasons}
-Why the company is interesting: ${company}
-Must-have requirements only: ${mustHaves}
-Salary: ${salary}
-Benefits: ${benefits}`;
+  const userPrompt = 'Write a job advert with these details:\n\nClient type: ' + clientType + '\nJob title: ' + jobTitle + '\nExperience level: ' + level + '\nWorking arrangement: ' + location + '\n3 reasons to leave their current job for this one: ' + reasons + '\nWhy the company is interesting: ' + company + '\nMust-have requirements only: ' + mustHaves + '\nSalary: ' + salary + '\nBenefits: ' + benefits;
 
   const btn = document.getElementById('generateBtn');
   btn.disabled = true;
@@ -412,31 +372,20 @@ Benefits: ${benefits}`;
     });
 
     let data;
-    try {
-      data = await response.json();
-    } catch(e) {
-      throw new Error('Could not read response from Anthropic. Status: ' + response.status);
-    }
-
+    try { data = await response.json(); } catch(e) { throw new Error('Could not read response. Status: ' + response.status); }
     if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
     if (!data.content || !data.content.length) throw new Error('Empty response received. Please try again.');
 
-    const text = data.content.map(b => b.text || '').filter(Boolean).join('');
+    const text = data.content.map(function(b) { return b.text || ''; }).filter(Boolean).join('');
     if (!text) throw new Error('No text in response. Please try again.');
 
     const outputEl = document.getElementById('advertOutput');
-    outputEl.innerHTML = '';
     outputEl.textContent = text;
+    document.getElementById('outputSection').style.display = 'block';
 
-    const outputSection = document.getElementById('outputSection');
-    outputSection.style.display = 'block';
-    setTimeout(() => {
-      outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
   } catch (err) {
-    errorEl.textContent = 'Something went wrong: ' + (err.message || 'Unknown error. Please check your API key in Settings and try again.');
+    errorEl.textContent = 'Something went wrong: ' + (err.message || 'Please check your API key in Settings and try again.');
     errorEl.style.display = 'block';
-    console.error('Advert generation error:', err);
   }
 
   btn.disabled = false;
@@ -445,10 +394,11 @@ Benefits: ${benefits}`;
 
 function copyAdvert() {
   const text = document.getElementById('advertOutput').textContent;
-  navigator.clipboard.writeText(text).then(() => {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(function() {
     const btn = document.getElementById('copyBtn');
     btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
   });
 }
 
@@ -464,70 +414,88 @@ function saveAdvert() {
     title: jobTitle || 'Untitled role',
     client: clientType || '',
     date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-    text
+    text: text
   });
   localStorage.setItem('savedAdverts', JSON.stringify(adverts));
 
   const msg = document.getElementById('saveMsg');
   msg.textContent = 'Saved to your library.';
   msg.style.display = 'block';
-  setTimeout(() => { msg.style.display = 'none'; }, 3000);
-}
-
-async function exportWord(text, titleStr) {
-  const { Document, Packer, Paragraph, TextRun } = docx;
-  const lines = text.split('\n');
-  const paragraphs = lines.map((line, i) => new Paragraph({
-    spacing: { after: i === 0 ? 280 : 180 },
-    children: [new TextRun({ text: line, size: i === 0 ? 28 : 22, bold: i === 0, font: 'Arial' })]
-  }));
-
-  const doc = new Document({
-    sections: [{
-      properties: { page: { size: { width: 11906, height: 16838 }, margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } } },
-      children: paragraphs
-    }]
-  });
-
-  const blob = await Packer.toBlob(doc);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = (titleStr || 'job-advert').replace(/[^a-z0-9]/gi, '_') + '.docx';
-  a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(function() { msg.style.display = 'none'; }, 3000);
 }
 
 function exportWordCurrent() {
   const text = document.getElementById('advertOutput').textContent;
-  const title = document.getElementById('jobTitle').value.trim();
-  if (text) exportWord(text, title);
+  const title = document.getElementById('jobTitle').value.trim() || 'Job Advert';
+  if (!text) return;
+  exportWordFromText(text, title);
+}
+
+function exportWordFromText(text, title) {
+  // Build a simple RTF file which Word opens natively on all platforms
+  const lines = text.split('\n');
+  let rtf = '{\\rtf1\\ansi\\deff0\n';
+  rtf += '{\\fonttbl{\\f0 Arial;}}\n';
+  rtf += '{\\colortbl;\\red26\\green26\\blue24;}\n';
+  rtf += '\\paperw11906\\paperh16838\\margl1440\\margr1440\\margt1440\\margb1440\n';
+
+  lines.forEach(function(line, i) {
+    if (i === 0) {
+      rtf += '\\f0\\fs28\\b ' + rtfEscape(line) + '\\b0\\par\n';
+    } else if (line.trim() === '') {
+      rtf += '\\par\n';
+    } else {
+      rtf += '\\f0\\fs22 ' + rtfEscape(line) + '\\par\n';
+    }
+  });
+
+  rtf += '}';
+
+  const blob = new Blob([rtf], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = title.replace(/[^a-z0-9]/gi, '_') + '.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function rtfEscape(str) {
+  return str
+    .replace(/\\/g, '\\\\')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/[^\x00-\x7F]/g, function(c) {
+      return '\\u' + c.charCodeAt(0) + '?';
+    });
 }
 
 function renderLibrary() {
   const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
   const container = document.getElementById('libraryList');
   if (adverts.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No saved adverts yet.<br>Generate one and click <strong>Save to library</strong>.</p></div>`;
+    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No saved adverts yet.<br>Generate one and click <strong>Save to library</strong>.</p></div>';
     return;
   }
-  container.innerHTML = adverts.map(a => `
-    <div class="advert-item" id="item-${a.id}">
-      <div class="advert-item-header">
-        <div>
-          <div class="advert-item-title">${escapeHtml(a.title)}</div>
-          <div class="advert-item-meta">${a.client ? escapeHtml(a.client) + ' &middot; ' : ''}${a.date}</div>
-        </div>
-        <div class="advert-item-actions">
-          <button class="btn-secondary" onclick="copyFromLibrary(${a.id}, this)">Copy</button>
-          <button class="btn-secondary" onclick="exportWordFromLibrary(${a.id})">Word</button>
-          <button class="btn-danger" onclick="deleteAdvert(${a.id})">Delete</button>
-        </div>
-      </div>
-      <button class="expand-btn" onclick="togglePreview(${a.id}, this)">Show advert ▾</button>
-      <div class="advert-preview" id="preview-${a.id}">${escapeHtml(a.text)}</div>
-    </div>
-  `).join('');
+  container.innerHTML = adverts.map(function(a) {
+    return '<div class="advert-item" id="item-' + a.id + '">' +
+      '<div class="advert-item-header">' +
+        '<div>' +
+          '<div class="advert-item-title">' + escapeHtml(a.title) + '</div>' +
+          '<div class="advert-item-meta">' + (a.client ? escapeHtml(a.client) + ' &middot; ' : '') + a.date + '</div>' +
+        '</div>' +
+        '<div class="advert-item-actions">' +
+          '<button class="btn-secondary" onclick="copyFromLibrary(' + a.id + ', this)">Copy</button>' +
+          '<button class="btn-secondary" onclick="exportWordFromLibrary(' + a.id + ')">Word</button>' +
+          '<button class="btn-danger" onclick="deleteAdvert(' + a.id + ')">Delete</button>' +
+        '</div>' +
+      '</div>' +
+      '<button class="expand-btn" onclick="togglePreview(' + a.id + ', this)">Show advert ▾</button>' +
+      '<div class="advert-preview" id="preview-' + a.id + '">' + escapeHtml(a.text) + '</div>' +
+    '</div>';
+  }).join('');
 }
 
 function togglePreview(id, btn) {
@@ -538,31 +506,31 @@ function togglePreview(id, btn) {
 
 function copyFromLibrary(id, btn) {
   const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
-  const a = adverts.find(x => x.id === id);
+  const a = adverts.find(function(x) { return x.id === id; });
   if (!a) return;
-  navigator.clipboard.writeText(a.text).then(() => {
+  navigator.clipboard.writeText(a.text).then(function() {
     const orig = btn.textContent;
     btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 2000);
+    setTimeout(function() { btn.textContent = orig; }, 2000);
   });
 }
 
 function exportWordFromLibrary(id) {
   const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
-  const a = adverts.find(x => x.id === id);
-  if (a) exportWord(a.text, a.title);
+  const a = adverts.find(function(x) { return x.id === id; });
+  if (a) exportWordFromText(a.text, a.title);
 }
 
 function deleteAdvert(id) {
   if (!confirm('Delete this advert from your library?')) return;
   let adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
-  adverts = adverts.filter(a => a.id !== id);
+  adverts = adverts.filter(function(a) { return a.id !== id; });
   localStorage.setItem('savedAdverts', JSON.stringify(adverts));
   renderLibrary();
 }
 
 function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 checkGate();
