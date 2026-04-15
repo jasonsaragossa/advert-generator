@@ -141,6 +141,7 @@
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.1</p>
   </div>
 
   <div class="card">
@@ -410,16 +411,32 @@ Benefits: ${benefits}`;
       })
     });
 
-    const data = await response.json();
-    if (data.error) throw new Error(data.error.message);
-    const text = data.content.map(b => b.text || '').join('');
+    let data;
+    try {
+      data = await response.json();
+    } catch(e) {
+      throw new Error('Could not read response from Anthropic. Status: ' + response.status);
+    }
 
-    document.getElementById('advertOutput').textContent = text;
-    document.getElementById('outputSection').style.display = 'block';
-    document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    if (!data.content || !data.content.length) throw new Error('Empty response received. Please try again.');
+
+    const text = data.content.map(b => b.text || '').filter(Boolean).join('');
+    if (!text) throw new Error('No text in response. Please try again.');
+
+    const outputEl = document.getElementById('advertOutput');
+    outputEl.innerHTML = '';
+    outputEl.textContent = text;
+
+    const outputSection = document.getElementById('outputSection');
+    outputSection.style.display = 'block';
+    setTimeout(() => {
+      outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   } catch (err) {
-    errorEl.textContent = 'Something went wrong: ' + (err.message || 'Please check your API key in Settings and try again.');
+    errorEl.textContent = 'Something went wrong: ' + (err.message || 'Unknown error. Please check your API key in Settings and try again.');
     errorEl.style.display = 'block';
+    console.error('Advert generation error:', err);
   }
 
   btn.disabled = false;
