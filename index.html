@@ -120,7 +120,7 @@
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
-    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.2</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.3</p>
   </div>
 
   <div class="card">
@@ -187,16 +187,8 @@
   <button class="btn-primary" id="generateBtn" onclick="generateAdvert()">Generate advert</button>
   <div class="error" id="errorMsg"></div>
 
-  <div class="output-card" id="outputSection">
-    <div class="section-label">Your advert</div>
-    <div class="advert-text" id="advertOutput"></div>
-    <div class="output-actions">
-      <button class="btn-secondary" id="copyBtn" onclick="copyAdvert()">Copy</button>
-      <button class="btn-secondary" onclick="exportWordCurrent()">Export to Word</button>
-      <button class="btn-secondary" onclick="saveAdvert()">Save to library</button>
-    </div>
-    <div class="success-msg" id="saveMsg"></div>
-  </div>
+  <div class="success-msg" id="saveMsg" style="margin-top:1rem;"></div>
+  <div style="display:none;" id="advertOutput"></div>
 </div>
 
 <div class="page" id="page-library">
@@ -351,7 +343,6 @@ async function generateAdvert() {
   const btn = document.getElementById('generateBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>Writing your advert...';
-  document.getElementById('outputSection').style.display = 'none';
   document.getElementById('saveMsg').style.display = 'none';
 
   try {
@@ -379,9 +370,22 @@ async function generateAdvert() {
     const text = data.content.map(function(b) { return b.text || ''; }).filter(Boolean).join('');
     if (!text) throw new Error('No text in response. Please try again.');
 
-    const outputEl = document.getElementById('advertOutput');
-    outputEl.textContent = text;
-    document.getElementById('outputSection').style.display = 'block';
+    document.getElementById('advertOutput').textContent = text;
+
+    // Auto-save to library
+    const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+    adverts.unshift({
+      id: Date.now(),
+      title: document.getElementById('jobTitle').value.trim() || 'Untitled role',
+      client: document.getElementById('clientType').value.trim() || '',
+      date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      text: text
+    });
+    localStorage.setItem('savedAdverts', JSON.stringify(adverts));
+
+    const msg = document.getElementById('saveMsg');
+    msg.innerHTML = 'Your advert has been saved. <a href="#" onclick="goToLibrary(); return false;" style="color:#1e7e44;font-weight:600;text-decoration:underline;">View it in Saved adverts</a>';
+    msg.style.display = 'block';
 
   } catch (err) {
     errorEl.textContent = 'Something went wrong: ' + (err.message || 'Please check your API key in Settings and try again.');
@@ -531,6 +535,14 @@ function deleteAdvert(id) {
 
 function escapeHtml(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function goToLibrary() {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('page-library').classList.add('active');
+  document.getElementById('tab-library').classList.add('active');
+  renderLibrary();
 }
 
 checkGate();
