@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Job Advert Generator</title>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; }
+
+  .nav { display: flex; border-bottom: 1px solid #e0e0dc; background: #fff; position: sticky; top: 0; z-index: 10; }
+  .nav-tab { flex: 1; padding: 14px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: #888; border-bottom: 2px solid transparent; transition: all 0.15s; font-family: inherit; }
+  .nav-tab.active { color: #1a1a18; border-bottom-color: #1a1a18; }
+  .nav-tab:hover:not(.active) { color: #444; background: #f9f9f7; }
+
+  .page { display: none; padding: 2rem 1rem; max-width: 680px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  .page-header { margin-bottom: 1.75rem; }
+  .logo { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; margin-bottom: 0.5rem; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 0.25rem; }
+  .subtitle { font-size: 14px; color: #777; }
+
+  .card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #aaa; margin-bottom: 1.25rem; }
+  .field { margin-bottom: 1.25rem; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 6px; }
+  input[type=text], textarea {
+    width: 100%; padding: 9px 12px; font-size: 14px; font-family: inherit;
+    border: 1px solid #ddd; border-radius: 8px; background: #fafafa;
+    color: #1a1a18; transition: border-color 0.15s; outline: none;
+  }
+  input[type=text]:focus, textarea:focus { border-color: #999; background: #fff; }
+  textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+  .hint { font-size: 12px; color: #bbb; margin-top: 5px; }
+
+  .pill-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+  .pill { position: relative; }
+  .pill input[type=radio] { position: absolute; opacity: 0; width: 0; height: 0; }
+  .pill label {
+    display: block; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px;
+    font-size: 13px; color: #666; cursor: pointer; text-align: center;
+    transition: all 0.12s; background: #fafafa; font-weight: 400;
+  }
+  .pill input[type=radio]:checked + label { border-color: #1a1a18; background: #1a1a18; color: #fff; font-weight: 500; }
+
+  .btn-primary {
+    width: 100%; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer;
+    background: #1a1a18; color: #fff; border: none; border-radius: 10px;
+    transition: opacity 0.15s; margin-top: 0.5rem; font-family: inherit;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-secondary {
+    padding: 9px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+    background: #fafafa; color: #444; border: 1px solid #ddd; border-radius: 8px;
+    font-family: inherit; transition: background 0.12s;
+  }
+  .btn-secondary:hover { background: #f0f0ee; }
+
+  .btn-danger {
+    padding: 9px 14px; font-size: 13px; font-weight: 500; cursor: pointer;
+    background: none; color: #c0392b; border: 1px solid #f5c6c0; border-radius: 8px;
+    font-family: inherit; transition: background 0.12s;
+  }
+  .btn-danger:hover { background: #fdf0ee; }
+
+  .output-card { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 1.5rem; margin-top: 1rem; display: none; }
+  .output-actions { display: flex; gap: 8px; margin-top: 1.25rem; flex-wrap: wrap; }
+  .advert-text { font-size: 15px; line-height: 1.75; color: #1a1a18; white-space: pre-wrap; }
+
+  .error { color: #c0392b; font-size: 13px; margin-top: 0.75rem; padding: 10px 12px; background: #fdf0ee; border-radius: 8px; border: 1px solid #f5c6c0; display: none; }
+  .success-msg { color: #1e7e44; font-size: 13px; margin-top: 0.75rem; padding: 10px 12px; background: #edfaf3; border-radius: 8px; border: 1px solid #b6e8ca; display: none; }
+
+  .spinner { display: inline-block; width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .advert-item { background: #fff; border-radius: 12px; border: 1px solid #e8e8e4; padding: 1.25rem; margin-bottom: 0.75rem; }
+  .advert-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .advert-item-title { font-size: 15px; font-weight: 600; color: #1a1a18; margin-bottom: 3px; }
+  .advert-item-meta { font-size: 12px; color: #aaa; }
+  .advert-item-actions { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+  .advert-preview { font-size: 14px; color: #555; margin-top: 10px; line-height: 1.6; border-top: 1px solid #f0f0ee; padding-top: 10px; display: none; white-space: pre-wrap; }
+  .advert-preview.open { display: block; }
+  .expand-btn { background: none; border: none; font-size: 12px; color: #aaa; cursor: pointer; margin-top: 6px; font-family: inherit; padding: 0; }
+  .expand-btn:hover { color: #555; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: #aaa; }
+  .empty-state .icon { font-size: 32px; margin-bottom: 0.75rem; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <button class="nav-tab active" id="tab-generate" onclick="showPage('generate', this)">Create advert</button>
+  <button class="nav-tab" id="tab-library" onclick="showPage('library', this)">Saved adverts</button>
+</nav>
+
+<!-- GENERATE PAGE -->
+<div class="page active" id="page-generate">
+  <div class="page-header">
+    <div class="logo">Advert Generator</div>
+    <h1>Create a job advert</h1>
+    <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">The role</div>
+    <div class="field">
+      <label>What type of client is it?</label>
+      <input type="text" id="clientType" placeholder="e.g. Hedge fund, fintech startup, insurance company" />
+    </div>
+    <div class="field">
+      <label>What's the job title?</label>
+      <input type="text" id="jobTitle" placeholder="e.g. Software Engineer – Cloud Engineering" />
+    </div>
+    <div class="field">
+      <label>What's the experience level?</label>
+      <div class="pill-grid">
+        <div class="pill"><input type="radio" name="level" id="lvl1" value="Junior / second role in career" /><label for="lvl1">Junior</label></div>
+        <div class="pill"><input type="radio" name="level" id="lvl2" value="Mid-level" /><label for="lvl2">Mid-level</label></div>
+        <div class="pill"><input type="radio" name="level" id="lvl3" value="Senior" /><label for="lvl3">Senior</label></div>
+        <div class="pill"><input type="radio" name="level" id="lvl4" value="Lead" /><label for="lvl4">Lead</label></div>
+        <div class="pill"><input type="radio" name="level" id="lvl5" value="Head of" /><label for="lvl5">Head of</label></div>
+        <div class="pill"><input type="radio" name="level" id="lvl6" value="Director or C-Suite" /><label for="lvl6">Director+</label></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Remote, hybrid or in office?</label>
+      <div class="pill-grid">
+        <div class="pill"><input type="radio" name="location" id="loc1" value="Fully remote" /><label for="loc1">Remote</label></div>
+        <div class="pill"><input type="radio" name="location" id="loc2" value="Hybrid" /><label for="loc2">Hybrid</label></div>
+        <div class="pill"><input type="radio" name="location" id="loc3" value="In office" /><label for="loc3">In office</label></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Selling points</div>
+    <div class="field">
+      <label>Give 3 reasons why someone would leave their job for this one</label>
+      <textarea id="reasons" placeholder="e.g. Fully remote, greenfield project, direct impact on P&amp;L"></textarea>
+      <div class="hint">Short phrases are fine.</div>
+    </div>
+    <div class="field">
+      <label>Why is the company interesting?</label>
+      <textarea id="company" placeholder="e.g. Fast-growing alternative data provider supplying major hedge funds globally, small tight-knit team"></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Requirements &amp; package</div>
+    <div class="field">
+      <label>What are the absolute must-haves?</label>
+      <textarea id="mustHaves" placeholder="e.g. Python, AWS — no need to list nice-to-haves"></textarea>
+      <div class="hint">No need for nice-to-haves — we'll keep the advert focused.</div>
+    </div>
+    <div class="field">
+      <label>What's the salary?</label>
+      <input type="text" id="salary" placeholder="e.g. Up to £100,000" />
+    </div>
+    <div class="field">
+      <label>What are the benefits?</label>
+      <textarea id="benefits" placeholder="e.g. Performance bonus, private healthcare, 25 days holiday"></textarea>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="generateBtn" onclick="generateAdvert()">Generate advert</button>
+  <div class="error" id="errorMsg"></div>
+
+  <div class="output-card" id="outputSection">
+    <div class="section-label">Your advert</div>
+    <div class="advert-text" id="advertOutput"></div>
+    <div class="output-actions">
+      <button class="btn-secondary" id="copyBtn" onclick="copyAdvert()">Copy</button>
+      <button class="btn-secondary" onclick="exportWordCurrent()">Export to Word</button>
+      <button class="btn-secondary" onclick="saveAdvert()">Save to library</button>
+    </div>
+    <div class="success-msg" id="saveMsg"></div>
+  </div>
+</div>
+
+<!-- LIBRARY PAGE -->
+<div class="page" id="page-library">
+  <div class="page-header">
+    <div class="logo">Advert Generator</div>
+    <h1>Saved adverts</h1>
+    <p class="subtitle">Your personal library — only visible to you on this device.</p>
+  </div>
+  <div id="libraryList"></div>
+</div>
+
+<script>
+const STYLE_PROMPT = `You write job adverts in a very specific style. Follow every rule exactly.
+
+RULES:
+1. Always write in second person — "you'll", "you're", "your". The reader should feel like it's already their job.
+2. Never say "ideal for someone", "we're looking for someone", or any third-person framing. Speak directly to the reader as if they are already in the role.
+3. Start with a plain headline: Job Title – Company Type – Salary
+4. Then a single short punchy line that hooks the reader with the key opportunity or benefit.
+5. Write in short paragraphs, conversational and direct. No bullet points anywhere. No corporate speak.
+6. Lead with what they will be doing and the opportunity — requirements come late.
+7. Close with a short punchy question on its own line, then "Get in touch." on its own line.
+8. Always end with a blank line then: "No up-to-date CV required."
+9. No bullet points anywhere. No bold text.
+10. For junior roles, say something like "this would be a great second role in your career" — never mention years of experience.
+11. Around 250–350 words total.
+
+STYLE EXAMPLES:
+
+React Developer - Alternative Investments - 75k + Bonuses
+
+Creative freedom, fast feedback loops and the chance to rebuild a system using React.
+
+You're going to be the main person tasked with rebuilding the client portal for a £10bn+ investment manager in London.
+
+The current system is old and was developed by a third party, primarily using C# and Angular. You'll be joining a team of mostly Python developers, but as the React expert to build out the UI. You'll work closely with the Head of Development and the wider team of engineers. You'll have lots of design and development ownership and you'll be given plenty of creative freedom.
+
+It's a small fund and a small engineering team, so feedback loops will be fast, and you'll work closely with the business to ensure your designs are meeting the client needs. Want to use a slightly different tech? Go for it. You'll be encouraged to bring in new ideas and innovate whenever needed.
+
+You're going to need to have solid experience in building out applications in React, nothing more. Some Python experience would be beneficial but not essential.
+
+Starting salary will be up to £75,000 plus bonuses and benefits.
+
+Want to help build this brand-new client portal? Get in touch.
+
+No up-to-date CV required.`;
+
+function showPage(name, tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  tab.classList.add('active');
+  if (name === 'library') renderLibrary();
+}
+
+async function generateAdvert() {
+  const clientType = document.getElementById('clientType').value.trim();
+  const jobTitle = document.getElementById('jobTitle').value.trim();
+  const reasons = document.getElementById('reasons').value.trim();
+  const company = document.getElementById('company').value.trim();
+  const mustHaves = document.getElementById('mustHaves').value.trim();
+  const salary = document.getElementById('salary').value.trim();
+  const benefits = document.getElementById('benefits').value.trim();
+  const levelEl = document.querySelector('input[name="level"]:checked');
+  const locationEl = document.querySelector('input[name="location"]:checked');
+
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.style.display = 'none';
+
+  if (!clientType || !jobTitle || !reasons || !company || !mustHaves || !salary) {
+    errorEl.textContent = 'Please fill in all required fields before generating.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
+  const level = levelEl ? levelEl.value : 'Not specified';
+  const location = locationEl ? locationEl.value : 'Not specified';
+
+  const userPrompt = `Write a job advert with these details:
+
+Client type: ${clientType}
+Job title: ${jobTitle}
+Experience level: ${level}
+Working arrangement: ${location}
+3 reasons to leave their current job for this one: ${reasons}
+Why the company is interesting: ${company}
+Must-have requirements only: ${mustHaves}
+Salary: ${salary}
+Benefits: ${benefits}`;
+
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Writing your advert...';
+  document.getElementById('outputSection').style.display = 'none';
+  document.getElementById('saveMsg').style.display = 'none';
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: STYLE_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content.map(b => b.text || '').join('');
+
+    document.getElementById('advertOutput').textContent = text;
+    document.getElementById('outputSection').style.display = 'block';
+    document.getElementById('outputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    errorEl.textContent = 'Something went wrong generating the advert. Please try again.';
+    errorEl.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = 'Generate advert';
+}
+
+function copyAdvert() {
+  const text = document.getElementById('advertOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  });
+}
+
+function saveAdvert() {
+  const text = document.getElementById('advertOutput').textContent;
+  const jobTitle = document.getElementById('jobTitle').value.trim();
+  const clientType = document.getElementById('clientType').value.trim();
+  if (!text) return;
+
+  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  adverts.unshift({
+    id: Date.now(),
+    title: jobTitle || 'Untitled role',
+    client: clientType || '',
+    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    text
+  });
+  localStorage.setItem('savedAdverts', JSON.stringify(adverts));
+
+  const msg = document.getElementById('saveMsg');
+  msg.textContent = 'Saved to your library.';
+  msg.style.display = 'block';
+  setTimeout(() => { msg.style.display = 'none'; }, 3000);
+}
+
+async function exportWord(text, titleStr) {
+  const { Document, Packer, Paragraph, TextRun } = docx;
+
+  const lines = text.split('\n');
+  const paragraphs = lines.map((line, i) => {
+    const isHeadline = i === 0;
+    return new Paragraph({
+      spacing: { after: isHeadline ? 280 : 180 },
+      children: [new TextRun({
+        text: line,
+        size: isHeadline ? 28 : 22,
+        bold: isHeadline,
+        font: 'Arial'
+      })]
+    });
+  });
+
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          size: { width: 11906, height: 16838 },
+          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+        }
+      },
+      children: paragraphs
+    }]
+  });
+
+  const blob = await Packer.toBlob(doc);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (titleStr || 'job-advert').replace(/[^a-z0-9]/gi, '_') + '.docx';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportWordCurrent() {
+  const text = document.getElementById('advertOutput').textContent;
+  const title = document.getElementById('jobTitle').value.trim();
+  if (text) exportWord(text, title);
+}
+
+function renderLibrary() {
+  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  const container = document.getElementById('libraryList');
+
+  if (adverts.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No saved adverts yet.<br>Generate one and click <strong>Save to library</strong>.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = adverts.map(a => `
+    <div class="advert-item" id="item-${a.id}">
+      <div class="advert-item-header">
+        <div>
+          <div class="advert-item-title">${escapeHtml(a.title)}</div>
+          <div class="advert-item-meta">${a.client ? escapeHtml(a.client) + ' &middot; ' : ''}${a.date}</div>
+        </div>
+        <div class="advert-item-actions">
+          <button class="btn-secondary" onclick="copyFromLibrary(${a.id}, this)">Copy</button>
+          <button class="btn-secondary" onclick="exportWordFromLibrary(${a.id})">Word</button>
+          <button class="btn-danger" onclick="deleteAdvert(${a.id})">Delete</button>
+        </div>
+      </div>
+      <button class="expand-btn" onclick="togglePreview(${a.id}, this)">Show advert ▾</button>
+      <div class="advert-preview" id="preview-${a.id}">${escapeHtml(a.text)}</div>
+    </div>
+  `).join('');
+}
+
+function togglePreview(id, btn) {
+  const preview = document.getElementById('preview-' + id);
+  const open = preview.classList.toggle('open');
+  btn.textContent = open ? 'Hide advert ▴' : 'Show advert ▾';
+}
+
+function copyFromLibrary(id, btn) {
+  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  const a = adverts.find(x => x.id === id);
+  if (!a) return;
+  navigator.clipboard.writeText(a.text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+function exportWordFromLibrary(id) {
+  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  const a = adverts.find(x => x.id === id);
+  if (a) exportWord(a.text, a.title);
+}
+
+function deleteAdvert(id) {
+  if (!confirm('Delete this advert from your library?')) return;
+  let adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  adverts = adverts.filter(a => a.id !== id);
+  localStorage.setItem('savedAdverts', JSON.stringify(adverts));
+  renderLibrary();
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
