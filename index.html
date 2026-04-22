@@ -120,7 +120,7 @@
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
-    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.3</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.5</p>
   </div>
 
   <div class="card">
@@ -131,7 +131,7 @@
     </div>
     <div class="field">
       <label>What's the job title?</label>
-      <input type="text" id="jobTitle" placeholder="e.g. Software Engineer – Cloud Engineering" />
+      <input type="text" id="jobTitle" placeholder="e.g. Software Engineer - Cloud Engineering" />
     </div>
     <div class="field">
       <label>What's the experience level?</label>
@@ -151,8 +151,14 @@
         <div class="pill"><input type="radio" name="location" id="loc2" value="Hybrid" /><label for="loc2">Hybrid</label></div>
         <div class="pill"><input type="radio" name="location" id="loc3" value="In office" /><label for="loc3">In office</label></div>
       </div>
+      <div class="field">
+      <label>Language</label>
+      <div class="pill-grid" style="grid-template-columns: repeat(2, 1fr);">
+        <div class="pill"><input type="radio" name="language" id="lang1" value="English" checked /><label for="lang1">English</label></div>
+        <div class="pill"><input type="radio" name="language" id="lang2" value="Spanish" /><label for="lang2">Spanish</label></div>
+      </div>
     </div>
-  </div>
+    </div>
 
   <div class="card">
     <div class="section-label">Selling points</div>
@@ -171,8 +177,8 @@
     <div class="section-label">Requirements &amp; package</div>
     <div class="field">
       <label>What are the absolute must-haves?</label>
-      <textarea id="mustHaves" placeholder="e.g. Python, AWS — no need to list nice-to-haves"></textarea>
-      <div class="hint">No need for nice-to-haves — we'll keep the advert focused.</div>
+      <textarea id="mustHaves" placeholder="e.g. Python, AWS - no need to list nice-to-haves"></textarea>
+      <div class="hint">No need for nice-to-haves - we'll keep the advert focused.</div>
     </div>
     <div class="field">
       <label>What's the salary?</label>
@@ -195,7 +201,7 @@
   <div class="page-header">
     <div class="logo">Advert Generator</div>
     <h1>Saved adverts</h1>
-    <p class="subtitle">Your personal library — only visible to you on this device.</p>
+    <p class="subtitle">Your personal library - only visible to you on this device.</p>
   </div>
   <div id="libraryList"></div>
 </div>
@@ -226,17 +232,18 @@
 const STYLE_PROMPT = `You write job adverts in a very specific style. Follow every rule exactly.
 
 RULES:
-1. Always write in second person — "you'll", "you're", "your". The reader should feel like it's already their job.
+1. Always write in second person - "you'll", "you're", "your". The reader should feel like it's already their job.
 2. Never say "ideal for someone", "we're looking for someone", or any third-person framing. Speak directly to the reader as if they are already in the role.
-3. Start with a plain headline: Job Title – Company Type – Salary
+3. Start with a plain headline: Job Title - Company Type - Salary
 4. Then a single short punchy line that hooks the reader with the key opportunity or benefit.
 5. Write in short paragraphs, conversational and direct. No bullet points anywhere. No corporate speak.
-6. Lead with what they will be doing and the opportunity — requirements come late.
+6. Lead with what they will be doing and the opportunity - requirements come late.
 7. Close with a short punchy question on its own line, then "Get in touch." on its own line.
 8. Always end with a blank line then: "No up-to-date CV required."
 9. No bullet points anywhere. No bold text.
-10. For junior roles, say something like "this would be a great second role in your career" — never mention years of experience.
-11. Around 250–350 words total.
+10. For junior roles, say something like "this would be a great second role in your career" - never mention years of experience.
+11. Around 250-350 words total.
+12. Never use long dashes (- or -). Use a comma, full stop, or rewrite the sentence instead.
 
 STYLE EXAMPLES:
 
@@ -299,7 +306,7 @@ function updateKeyStatus() {
     const masked = key.slice(0, 10) + '••••••••••••' + key.slice(-4);
     badge.innerHTML = '<div class="key-status set"><div class="key-dot set"></div>API key saved on this device (' + masked + ')</div>';
   } else {
-    badge.innerHTML = '<div class="key-status unset"><div class="key-dot unset"></div>No API key saved — add one below</div>';
+    badge.innerHTML = '<div class="key-status unset"><div class="key-dot unset"></div>No API key saved - add one below</div>';
   }
 }
 
@@ -338,7 +345,10 @@ async function generateAdvert() {
   const level = levelEl ? levelEl.value : 'Not specified';
   const location = locationEl ? locationEl.value : 'Not specified';
 
-  const userPrompt = 'Write a job advert with these details:\n\nClient type: ' + clientType + '\nJob title: ' + jobTitle + '\nExperience level: ' + level + '\nWorking arrangement: ' + location + '\n3 reasons to leave their current job for this one: ' + reasons + '\nWhy the company is interesting: ' + company + '\nMust-have requirements only: ' + mustHaves + '\nSalary: ' + salary + '\nBenefits: ' + benefits;
+    const languageEl = document.querySelector('input[name="language"]:checked');
+  const language = languageEl ? languageEl.value : 'English';
+
+  const userPrompt = 'Write a job advert with these details:\n\nLanguage: ' + language + '\nClient type: ' + clientType + '\nJob title: ' + jobTitle + '\nExperience level: ' + level + '\nWorking arrangement: ' + location + '\n3 reasons to leave their current job for this one: ' + reasons + '\nWhy the company is interesting: ' + company + '\nMust-have requirements only: ' + mustHaves + '\nSalary: ' + salary + '\nBenefits: ' + benefits;
 
   const btn = document.getElementById('generateBtn');
   btn.disabled = true;
