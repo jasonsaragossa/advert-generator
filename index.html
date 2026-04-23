@@ -120,7 +120,7 @@
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
-    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.7</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.8</p>
   </div>
 
   <div class="card">
@@ -479,10 +479,11 @@ function rtfEscape(str) {
 }
 
 function renderLibrary() {
-  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
+  const raw = localStorage.getItem('savedAdverts');
+  const adverts = JSON.parse(raw || '[]');
   const container = document.getElementById('libraryList');
   if (adverts.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No saved adverts yet.<br>Generate one and click <strong>Save to library</strong>.</p></div>';
+    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>No saved adverts yet.<br>Generate one and the advert will appear here automatically.</p><p style="font-size:11px;color:#ccc;margin-top:1rem;">Debug: localStorage key = ' + (raw === null ? 'null (nothing stored)' : 'found, ' + adverts.length + ' items') + '<br>Origin: ' + window.location.origin + '</p></div>';
     return;
   }
   container.innerHTML = adverts.map(function(a) {
