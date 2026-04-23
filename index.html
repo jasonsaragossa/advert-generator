@@ -120,7 +120,7 @@
     <div class="logo">Advert Generator</div>
     <h1>Create a job advert</h1>
     <p class="subtitle">Fill in the details and we'll write the advert in your style.</p>
-    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.5</p>
+    <p style="font-size:11px;color:#ccc;margin-top:6px;">v1.7</p>
   </div>
 
   <div class="card">
@@ -345,7 +345,7 @@ async function generateAdvert() {
   const level = levelEl ? levelEl.value : 'Not specified';
   const location = locationEl ? locationEl.value : 'Not specified';
 
-    const languageEl = document.querySelector('input[name="language"]:checked');
+  const languageEl = document.querySelector('input[name="language"]:checked');
   const language = languageEl ? languageEl.value : 'English';
 
   const userPrompt = 'Write a job advert with these details:\n\nLanguage: ' + language + '\nClient type: ' + clientType + '\nJob title: ' + jobTitle + '\nExperience level: ' + level + '\nWorking arrangement: ' + location + '\n3 reasons to leave their current job for this one: ' + reasons + '\nWhy the company is interesting: ' + company + '\nMust-have requirements only: ' + mustHaves + '\nSalary: ' + salary + '\nBenefits: ' + benefits;
@@ -397,6 +397,18 @@ async function generateAdvert() {
     msg.innerHTML = 'Your advert has been saved. <a href="#" onclick="goToLibrary(); return false;" style="color:#1e7e44;font-weight:600;text-decoration:underline;">View it in Saved adverts</a>';
     msg.style.display = 'block';
 
+    // Auto-download as txt file
+    const filename = (document.getElementById('jobTitle').value.trim() || 'Job Advert').replace(/[^a-z0-9]/gi, '_') + '.txt';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
   } catch (err) {
     errorEl.textContent = 'Something went wrong: ' + (err.message || 'Please check your API key in Settings and try again.');
     errorEl.style.display = 'block';
@@ -416,27 +428,7 @@ function copyAdvert() {
   });
 }
 
-function saveAdvert() {
-  const text = document.getElementById('advertOutput').textContent;
-  const jobTitle = document.getElementById('jobTitle').value.trim();
-  const clientType = document.getElementById('clientType').value.trim();
-  if (!text) return;
 
-  const adverts = JSON.parse(localStorage.getItem('savedAdverts') || '[]');
-  adverts.unshift({
-    id: Date.now(),
-    title: jobTitle || 'Untitled role',
-    client: clientType || '',
-    date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-    text: text
-  });
-  localStorage.setItem('savedAdverts', JSON.stringify(adverts));
-
-  const msg = document.getElementById('saveMsg');
-  msg.textContent = 'Saved to your library.';
-  msg.style.display = 'block';
-  setTimeout(function() { msg.style.display = 'none'; }, 3000);
-}
 
 function exportWordCurrent() {
   const text = document.getElementById('advertOutput').textContent;
